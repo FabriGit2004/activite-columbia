@@ -10,6 +10,14 @@ import { UsersModule } from './users/users.module';
 import { Usuarios } from './users/entities/Usuarios'; 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { EventsModule } from './events/events.module';
+import  {Eventos} from './events/entities/event.entity';
+import { SubscribersModule } from './subscribers/subscribers.module';
+import { Suscriptores } from './subscribers/entities/subscriber.entity';
+import { WhatsappModule } from './whatsapp/whatsapp.module';
+
+
+
 
 @Module({
   imports: [
@@ -28,14 +36,18 @@ import { AppService } from './app.service';
       database: process.env.DB_DATABASE || 'nest_login_db',
       
       // List the entities here
-      entities: [Usuarios], 
+      entities: [Usuarios, Eventos, Suscriptores], 
       
       synchronize: false, 
     }),
     
     // 3. Import your feature modules
     UsersModule,
-    AuthModule, 
+    AuthModule,
+    EventsModule,
+    SubscribersModule,
+    WhatsappModule,
+
   ],
   controllers: [AppController],
   providers: [AppService],

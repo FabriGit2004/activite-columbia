@@ -23,6 +23,7 @@ import Eventos from './Eventos/Eventos';
 import Alumnos from './Alumnos/Alumnos';
 import Notificaciones from './Notificaciones/Notificaciones';
 import Cuenta from './Cuenta/Cuenta';
+import EventsTable from './Eventos/Eventos';
 
 const drawerWidth = 240;
 
@@ -57,7 +58,10 @@ const NavToStateMap = {
 function closeSession(){
 
     window.location.reload();
-    localStorage.removeItem('token'); 
+    localStorage.removeItem('token');
+    localStorage.removeItem('userId');
+    document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;"
+    document.cookie = "userId=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;"
 
 }
 
@@ -75,7 +79,7 @@ export default function ClippedDrawer() {
       case VISTAS.INICIO:
         return <Inicio />;
       case VISTAS.EVENTOS:
-        return <Eventos readOnly={false} />;
+        return <EventsTable/>;
       case VISTAS.ALUMNOS:
         return <Alumnos />;
       case VISTAS.NOTIFICACIONES:

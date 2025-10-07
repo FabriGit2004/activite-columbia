@@ -1,4 +1,12 @@
-import { Column, Entity, Index, PrimaryGeneratedColumn } from "typeorm";
+import {
+  Column,
+  Entity,
+  Index,
+  OneToMany,
+  PrimaryGeneratedColumn,
+} from "typeorm";
+import { Eventos } from "./Eventos";
+import { Suscriptores } from "./Suscriptores";
 
 @Index("usuarios_correo_key", ["correo"], { unique: true })
 @Index("usuarios_pkey", ["id"], { unique: true })
@@ -31,6 +39,10 @@ export class Usuarios {
     default: () => "now()",
   })
   fechaRegistro: Date;
-    eventos: any;
-    suscriptores: any;
+
+  @OneToMany(() => Eventos, (eventos) => eventos.usuario)
+  eventos: Eventos[];
+
+  @OneToMany(() => Suscriptores, (suscriptores) => suscriptores.usuario)
+  suscriptores: Suscriptores[];
 }

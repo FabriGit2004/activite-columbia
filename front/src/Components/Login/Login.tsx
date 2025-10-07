@@ -32,6 +32,10 @@ export default function BackgroundOverlay({ onClose, openDashboard }: Props) {
       const response = await axios.post(API_URL, datos);
       if (response.status === 201) {
         openDashboard();
+
+        document.cookie = `token=${response.data?.token}; path=/; SameSite=Lax`; 
+        document.cookie = `userId=${response.data?.user?.id}; path=/; SameSite=Lax`; 
+
       }
 
     } catch (error: any) {

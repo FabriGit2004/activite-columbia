@@ -1,158 +1,219 @@
-import * as React from 'react';
+import React, { useEffect, useState } from 'react';
+import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import {
   Box,
   Button,
-  Stack,
-  Typography,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   TextField,
-  IconButton,
 } from '@mui/material';
-import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
-import DeleteIcon from '@mui/icons-material/Delete';
+import axios from 'axios';
 
-interface Props {
-  readOnly: boolean;
+// 🧩 Tipo de datos del evento
+interface Event {
+  id: number;
+  titulo: string;
+  fecha: string;
+  lugar: string;
+  fechaDeEnvio: string;
+  usuarioId: number;
 }
 
-export default function Eventos({ readOnly }: Props) {
-  const [rows, setRows] = React.useState([
-    {
-      id: 1,
-      titulo: 'Conferencia React',
-      fecha: '2025-11-10',
-      lugar: 'Buenos Aires',
-      fechaDeEnvio: '',
-    },
-    {
-      id: 2,
-      titulo: 'Webinar de Seguridad',
-      fecha: '2025-11-15',
-      lugar: 'Online',
-      fechaDeEnvio: '2025-11-14',
-    },
-    {
-      id: 3,
-      titulo: 'Hackathon Nacional',
-      fecha: '2025-12-01',
-      lugar: 'Córdoba',
-      fechaDeEnvio: '',
-    },
-  ]);
+// 🧩 DTO de creación (sin ID)
+interface CreateEventDto {
+  titulo: string;
+  fecha: string;
+  lugar: string;
+  fechaDeEnvio: string;
+  usuarioId: number;
+}
 
-  const [newEvent, setNewEvent] = React.useState({
+const API_URL = 'http://127.0.0.1:3001/events'; // Cambiar según tu backend
+
+
+ const obtenerCookie = (nombre: string) => {
+    // Escapa el nombre para usarlo en la expresión regular
+    const nameEQ = nombre + "=";
+    
+    // Divide el string de cookies en un array de cookies individuales
+    const ca = document.cookie.split(';');
+
+    for(let i = 0; i < ca.length; i++) {
+        let c = ca[i];
+        
+        // Elimina los espacios en blanco al inicio (common issue)
+        while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+        
+        // Verifica si la cookie comienza con el nombre buscado
+        if (c.indexOf(nameEQ) === 0) {
+            // Devuelve el valor (la parte restante después del nombre=)
+            return c.substring(nameEQ.length, c.length);
+        }
+    }
+    return '';
+  };
+
+
+
+
+const EventsTable: React.FC = () => {
+  const [rows, setRows] = useState<Event[]>([]);
+  const [open, setOpen] = useState(false);
+  const [idUsuario, setIdUsuario] = useState<number | null>(parseInt(obtenerCookie('userId')));
+  const [newEvent, setNewEvent] = useState<CreateEventDto>({
+
     titulo: '',
     fecha: '',
     lugar: '',
     fechaDeEnvio: '',
+    usuarioId: idUsuario ?? 0,
   });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setNewEvent((prev) => ({ ...prev, [name]: value }));
+  
+
+  // 📦 Obtener todos los eventos
+  const fetchEvents = async () => {
+
+    const userId = obtenerCookie('userId');
+    setIdUsuario(parseInt(userId ?? ''))
+
+    try {
+      const { data } = await axios.get<Event[]>(`${API_URL}/${userId}`);
+      setRows(data);
+    } catch (err) {
+      console.error('Error al cargar los eventos', err);
+    }
   };
 
-  const addRow = () => {
-    const nextId = rows.length ? rows[rows.length - 1].id + 1 : 1;
-    const newRow = { id: nextId, ...newEvent };
-    setRows((prev) => [...prev, newRow]);
-    setNewEvent({ titulo: '', fecha: '', lugar: '', fechaDeEnvio: '' });
+  useEffect(() => {
+    fetchEvents();
+  }, []);
+
+  // 🗑️ Eliminar evento
+  const handleDelete = async (id: number) => {
+
+    try {
+      await axios.delete(`${API_URL}/${id}`);
+      setRows((prev) => prev.filter((r) => r.id !== id));
+    } catch (err) {
+      console.error('Error al eliminar el evento', err);
+    }
   };
 
-  const handleDelete = (idToDelete: number) => {
-    setRows((prev) => prev.filter((row) => row.id !== idToDelete));
+  // ➕ Crear evento
+  const handleCreate = async () => {
+    try {
+      const { data } = await axios.post<Event>(API_URL, newEvent);
+      setRows((prev) => [...prev, data]);
+      setOpen(false);
+      setNewEvent({
+        titulo: '',
+        fecha: '',
+        lugar: '',
+        fechaDeEnvio: '',
+        usuarioId:idUsuario ?? 0,
+      });
+    } catch (err) {
+      console.error('Error al crear el evento', err);
+    }
   };
 
+  // 📋 Definición de columnas
   const columns: GridColDef[] = [
-    { field: 'id', headerName: 'ID', width: 70 },
-    { field: 'titulo', headerName: 'Título del Evento', flex: 1 },
-    { field: 'fecha', headerName: 'Fecha', width: 130 },
-    { field: 'lugar', headerName: 'Lugar', width: 180 },
+    { field: 'id', headerName: 'ID', width: 80 },
+    { field: 'titulo', headerName: 'Título', width: 200 },
+    { field: 'fecha', headerName: 'Fecha', width: 150 },
+    { field: 'lugar', headerName: 'Lugar', width: 150 },
+    { field: 'fechaDeEnvio', headerName: 'Fecha de Envío', width: 150 },
+    { field: 'usuarioId', headerName: 'Usuario ID', width: 120 },
     {
-      field: 'fechaDeEnvio',
-      headerName: 'Fecha de Envío',
-      width: 150,
-      renderCell: (params: GridRenderCellParams) => params.value || '—',
-    },
-  ];
-
-  // 👉 Solo si NO es readOnly, agregamos la columna de acciones
-  if (!readOnly) {
-    columns.push({
       field: 'acciones',
-      headerName: '',
-      width: 80,
-      sortable: false,
-      disableColumnMenu: true,
-      renderCell: (params: GridRenderCellParams) => (
-        <IconButton
+      headerName: 'Acciones',
+      width: 150,
+      renderCell: (params) => (
+        <Button
+          variant="outlined"
           color="error"
           onClick={() => handleDelete(params.row.id)}
         >
-          <DeleteIcon />
-        </IconButton>
+          Eliminar
+        </Button>
       ),
-    });
-  }
+    },
+  ];
 
   return (
-    <>
-      <Typography variant="h5" gutterBottom>
-        EVENTOS
-      </Typography>
-
-      {/* 📝 Formulario para agregar eventos (solo si puede editar) */}
-      {!readOnly && (
-        <Box sx={{ mb: 2 }}>
-          <Stack direction="row" spacing={2} alignItems="center">
-            <TextField
-              label="Título"
-              name="titulo"
-              value={newEvent.titulo}
-              onChange={handleChange}
-              size="small"
-            />
-            <TextField
-              type="date"
-              label="Fecha del Evento"
-              name="fecha"
-              value={newEvent.fecha}
-              onChange={handleChange}
-              size="small"
-              InputLabelProps={{ shrink: true }}
-            />
-            <TextField
-              label="Lugar"
-              name="lugar"
-              value={newEvent.lugar}
-              onChange={handleChange}
-              size="small"
-            />
-            <TextField
-              type="date"
-              label="Fecha de Envío (opcional)"
-              name="fechaDeEnvio"
-              value={newEvent.fechaDeEnvio}
-              onChange={handleChange}
-              size="small"
-              InputLabelProps={{ shrink: true }}
-            />
-            <Button variant="contained" onClick={addRow}>
-              Agregar Evento
-            </Button>
-          </Stack>
-        </Box>
-      )}
-
-      {/* 📋 Tabla de eventos (siempre visible) */}
-      <Box sx={{ width: '100%' }}>
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <DataGrid
-            rows={rows}
-            columns={columns}
-
-          />
-        </div>
+    <Box sx={{ height: 500, width: '100%', p: 3 }}>
+      <Box display="flex" justifyContent="space-between" mb={2}>
+        <h2>Eventos</h2>
+        <Button variant="contained" onClick={() => setOpen(true)}>
+          Nuevo Evento
+        </Button>
       </Box>
-    </>
+
+      <DataGrid
+        rows={rows}
+        columns={columns}
+        pageSizeOptions={[5, 10]}
+        initialState={{
+          pagination: { paginationModel: { pageSize: 5, page: 0 } },
+        }}
+        disableRowSelectionOnClick
+        getRowId={(row) => row.id}
+      />
+
+      {/* Modal para crear evento */}
+      <Dialog open={open} onClose={() => setOpen(false)}>
+        <DialogTitle>Crear Nuevo Evento</DialogTitle>
+        <DialogContent
+          sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1, minWidth: 400 }}
+        >
+          <TextField
+            sx={{mt:2}}
+            label="Título"
+            value={newEvent.titulo}
+            onChange={(e) => setNewEvent({ ...newEvent, titulo: e.target.value })}
+          />
+          <TextField
+            label="Fecha"
+            type="date"
+            InputLabelProps={{ shrink: true }}
+            value={newEvent.fecha}
+            onChange={(e) => setNewEvent({ ...newEvent, fecha: e.target.value })}
+          />
+          <TextField
+            label="Lugar"
+            value={newEvent.lugar}
+            onChange={(e) => setNewEvent({ ...newEvent, lugar: e.target.value })}
+          />
+          <TextField
+            label="Fecha de Envío"
+            type="date"
+            InputLabelProps={{ shrink: true }}
+            value={newEvent.fechaDeEnvio}
+            onChange={(e) => setNewEvent({ ...newEvent, fechaDeEnvio: e.target.value })}
+          />
+          <TextField
+            label="Usuario ID"
+            type="string"
+            disabled={true}
+            value={idUsuario}
+            onChange={(e) =>
+              setNewEvent({ ...newEvent, usuarioId: Number(e.target.value) })
+            }
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpen(false)}>Cancelar</Button>
+          <Button variant="contained" onClick={handleCreate}>
+            Crear
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Box>
   );
-}
+};
+
+export default EventsTable;

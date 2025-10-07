@@ -1,142 +1,279 @@
-import * as React from 'react';
+import React, { useEffect, useState } from 'react';
+import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import {
   Box,
   Button,
-  Stack,
-  Typography,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   TextField,
-  MenuItem,
+  Typography,
 } from '@mui/material';
-import { DataGrid } from '@mui/x-data-grid';
+import axios from 'axios';
 
-export default function Alumnos() {
-  const [rows, setRows] = React.useState([
-    { id: 1, name: 'Carlos López', phone: '+595981234567', course: 'Informática' },
-    { id: 2, name: 'Ana Gómez', phone: '+595972345678', course: 'Psicología' },
-    { id: 3, name: 'Juan Ruiz', phone: '+595961112233', course: 'Diseño' },
-  ]);
+// --- Definiciones de Tipos ---
 
-  const [nbRows, setNbRows] = React.useState(rows.length);
+interface Subscriber {
+  id: number; // CLAVE: Debe existir y ser único.
+  nombre: string;
+  telefono: string;
+  email: string | null; // Acepta string o null
+  fechaRegistro: string;
+  usuarioId: number;
+}
 
-  // Columnas definidas manualmente
-  const columns = [
-    { field: 'id', headerName: 'ID', width: 70 },
-    { field: 'name', headerName: 'Nombre', flex: 1 },
-    { field: 'phone', headerName: 'Teléfono', width: 180 },
-    { field: 'course', headerName: 'Curso', width: 200 },
-  ];
+interface CreateSubscriberDto {
+  usuarioId: number;
+  nombre: string;
+  telefono: string;
+  email: string;
+  fechaRegistro: string;
+}
 
-  // Estado para el formulario de nuevo alumno
-  const [newStudent, setNewStudent] = React.useState({
-    name: '',
-    phone: '+595',
-    course: '',
-  });
+const API_URL = 'http://127.0.0.1:3001/subscribers';
 
-const handleChange = (e : any) => {
-  const { name, value } = e.target;
 
-  let newValue = value;
+const obtenerCookie = (nombre: string) => {
+    // Escapa el nombre para usarlo en la expresión regular
+    const nameEQ = nombre + "=";
+    
+    // Divide el string de cookies en un array de cookies individuales
+    const ca = document.cookie.split(';');
 
-  if (name === 'phone') {
-    // Asegurar que siempre empiece con +595
-    if (!newValue.startsWith('+595')) {
-      newValue = '+595';
+    for(let i = 0; i < ca.length; i++) {
+        let c = ca[i];
+        
+        // Elimina los espacios en blanco al inicio (common issue)
+        while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+        
+        // Verifica si la cookie comienza con el nombre buscado
+        if (c.indexOf(nameEQ) === 0) {
+            // Devuelve el valor (la parte restante después del nombre=)
+            return c.substring(nameEQ.length, c.length);
+        }
     }
-
-    // Eliminar un 0 luego de +595 (ej: +5950XXX → +595XXX)
-    if (newValue.startsWith('+5950')) {
-      newValue = '+595' + newValue.slice(5);
-    }
-  }
-
-  setNewStudent((prev) => ({
-    ...prev,
-    [name]: newValue,
-  }));
-};
-
-  const handleAddStudent = () => {
-    const { name, phone, course } = newStudent;
-
-    if (!name || !phone || !course || phone.length < 8) {
-      alert('Por favor completá todos los campos correctamente.');
-      return;
-    }
-
-    const nextId = rows.length ? rows[rows.length - 1].id + 1 : 1;
-
-    setRows((prev) => [
-      ...prev,
-      {
-        id: nextId,
-        name,
-        phone,
-        course,
-      },
-    ]);
-
-    setNbRows((prev) => prev + 1);
-
-    // Limpiar el formulario
-    setNewStudent({
-      name: '',
-      phone: '+595',
-      course: '',
-    });
+    return '';
   };
 
+
+
+
+// --- Componente Principal ---
+
+const SubscribersTable: React.FC = () => {
+  const [rows, setRows] = useState<Subscriber[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [open, setOpen] = useState(false);
+
+  const [idUsuario, setIdUsuario] = useState<number | null>(parseInt(obtenerCookie('userId')));
+  
+
+  const [telefonoInput, setTelefonoInput] = useState('');
+  const [telefonoError, setTelefonoError] = useState('');
+  const [newSubscriber, setNewSubscriber] = useState<CreateSubscriberDto>({
+    usuarioId: idUsuario ?? 0,
+    nombre: '',
+    telefono: '+5959',
+    email: '',
+    fechaRegistro: new Date().toISOString().split('T')[0],
+  });
+
+
+
+
+
+
+
+  // Lógica de Carga de Suscriptores (READ)
+  const fetchSubscribers = async () => {
+    setLoading(true);
+
+
+    const userId = obtenerCookie('userId');
+
+    try {
+      const { data } = await axios.get<Subscriber[]>(`${API_URL}/${userId}`);
+      // **IMPORTANTE**: Filtrar filas que no tienen 'id' si la API lo permite, 
+      // para evitar errores críticos en DataGrid.
+      const validRows = data.filter(row => row.id !== undefined && row.id !== null);
+      setRows(validRows);
+    } catch (err) {
+      console.error('Error al cargar suscriptores:', err);
+      // Manejo de errores más amigable
+      alert('Error al obtener los datos. Asegúrate de que el backend esté funcionando.');
+    } finally {
+        setLoading(false);
+    }
+  };
+
+  // 1. LLAMADA INICIAL A LA API (Solución al "bug" de datos vacíos)
+  useEffect(() => {
+    try {
+      fetchSubscribers();
+    } catch (error) {
+      alert('Aun no tenemos registros ...')
+    }
+
+  }, []); 
+
+  // ... (handleDelete, handleTelefonoChange, handleCreate se mantienen igual o con ligeros ajustes)
+
+  const handleDelete = async (id: number) => {
+    if (!window.confirm('¿Seguro que deseas eliminar este suscriptor?')) return;
+    try {
+      await axios.delete(`${API_URL}/${id}`);
+      setRows((prev) => prev.filter((r) => r.id !== id));
+    } catch (err) {
+      console.error('Error al eliminar suscriptor', err);
+    }
+  };
+
+  const handleTelefonoChange = (value: string) => {
+    const soloNumeros = value.replace(/\D/g, '');
+    if (soloNumeros.startsWith('0')) setTelefonoError('El número no puede comenzar con 0.');
+    else setTelefonoError('');
+
+    setTelefonoInput(soloNumeros);
+    setNewSubscriber({ ...newSubscriber, telefono: `+5959${soloNumeros}` });
+  };
+
+  const handleCreate = async () => {
+    if (telefonoError || !newSubscriber.nombre || newSubscriber.usuarioId <= 0) return;
+    try {
+      const { data } = await axios.post<Subscriber>(API_URL, newSubscriber);
+      setRows((prev) => [...prev, data]);
+      setOpen(false);
+      // Resetear estados del formulario
+      setNewSubscriber({
+        usuarioId: idUsuario ?? 0, nombre: '', telefono: '+5959', email: '',
+        fechaRegistro: new Date().toISOString().split('T')[0],
+      });
+      setTelefonoInput('');
+    } catch (err) {
+      console.error('Error al crear suscriptor', err);
+    }
+  };
+
+  // 2. DEFINICIÓN DE COLUMNAS REFORZADA (Manejo de Nulos)
+  const columns: GridColDef<Subscriber>[] = [
+    { field: 'id', headerName: 'ID', width: 80 },
+    { field: 'nombre', headerName: 'Nombre', width: 200 },
+    { field: 'telefono', headerName: 'Teléfono', width: 180 },
+    { 
+      field: 'email', 
+      headerName: 'Email', 
+      width: 220,
+
+    },
+    {
+      field: 'fechaRegistro',
+      headerName: 'Fecha de Registro',
+      width: 180,
+    },
+    {
+      field: 'usuarioId',
+      headerName: 'Usuario ID',
+      width: 130,
+    },
+    {
+      field: 'acciones',
+      headerName: 'Acciones',
+      width: 150,
+      renderCell: (params) => (
+        <Button variant="outlined" color="error" size="small" onClick={() => handleDelete(params.row.id)}>
+          Eliminar
+        </Button>
+      ),
+    },
+  ];
+
+  // --- Renderizado ---
   return (
-    <>
-      <Typography variant="h5" gutterBottom>
-        ALUMNOS
-      </Typography>
-
-      <Box sx={{ mb: 2 }}>
-        <Stack direction="row" spacing={2} alignItems="center">
-          <TextField
-            label="Nombre"
-            name="name"
-            value={newStudent.name}
-            onChange={handleChange}
-            size="small"
-          />
-
-          <TextField
-            label="Teléfono"
-            name="phone"
-            value={newStudent.phone}
-            onChange={handleChange}
-            size="small"
-          />
-
-          <TextField
-            label="Curso"
-            name="course"
-            value={newStudent.course}
-            onChange={handleChange}
-            size="small"
-            select
-            sx={{ width: 180 }}
-          >
-            <MenuItem value="Informática">Informática</MenuItem>
-            <MenuItem value="Psicología">Psicología</MenuItem>
-            <MenuItem value="Diseño">Diseño</MenuItem>
-          </TextField>
-
-          <Button variant="contained" onClick={handleAddStudent}>
-            Agregar Alumno
-          </Button>
-        </Stack>
+    <Box sx={{ height: 500, width: '100%', p: 3 }}>
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+        <Typography variant="h4" component="h2">Suscriptores</Typography>
+        <Button variant="contained" onClick={() => setOpen(true)}>
+          Nuevo Suscriptor
+        </Button>
       </Box>
 
-      <Box sx={{ width: '100%' }}>
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <DataGrid
-            rows={rows.slice(0, nbRows)}
-            columns={columns}          />
-        </div>
-      </Box>
-    </>
+      <DataGrid
+        rows={rows}
+        columns={columns}
+        loading={loading} // Muestra el indicador de carga
+        pageSizeOptions={[5, 10]}
+        initialState={{ pagination: { paginationModel: { pageSize: 5, page: 0 } } }}
+        disableRowSelectionOnClick
+        getRowId={(row) => row.id}
+      />
+
+      {/* ... (Tu Dialogo de Creación se mantiene igual) ... */}
+      <Dialog open={open} onClose={() => setOpen(false)}>
+         <DialogTitle>Crear Nuevo Suscriptor</DialogTitle>
+         <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1, minWidth: 400 }}>
+           <TextField
+             label="Nombre"
+             value={newSubscriber.nombre}
+             onChange={(e) => setNewSubscriber({ ...newSubscriber, nombre: e.target.value })}
+             required
+           />
+           <TextField
+             label="Teléfono"
+             value={telefonoInput}
+             onChange={(e) => handleTelefonoChange(e.target.value)}
+             InputProps={{ startAdornment: <span style={{ marginRight: 6 }}>+5959</span> }}
+             error={!!telefonoError}
+             helperText={telefonoError || 'Ingresa los dígitos después de +5959'}
+             required
+           />
+           <TextField
+             label="Email"
+             type="email"
+             value={newSubscriber.email}
+             onChange={(e) => setNewSubscriber({ ...newSubscriber, email: e.target.value })}
+           />
+           <TextField
+             label="Fecha de Registro"
+             type="date"
+             InputLabelProps={{ shrink: true }}
+             value={newSubscriber.fechaRegistro}
+             onChange={(e) => setNewSubscriber({ ...newSubscriber, fechaRegistro: e.target.value })}
+             required
+           />
+           <TextField
+             label="Usuario ID"
+             type="number"
+             value={idUsuario ?? 0}
+             disabled={true}
+             onChange={(e) => {
+               // Asegura que el valor sea un número (o 0 si está vacío)
+               const value = e.target.value;
+               setNewSubscriber({ ...newSubscriber, usuarioId: value ? Number(value) : 0 });
+             }}
+             helperText="ID del usuario propietario del suscriptor (debe ser > 0)"
+             required
+           />
+         </DialogContent>
+
+         <DialogActions>
+           <Button onClick={() => setOpen(false)}>Cancelar</Button>
+           <Button
+             variant="contained"
+             onClick={handleCreate}
+             disabled={
+                 !!telefonoError || 
+                 !newSubscriber.nombre || 
+                 newSubscriber.usuarioId <= 0 ||
+                 !newSubscriber.fechaRegistro
+             }
+           >
+             Crear
+           </Button>
+         </DialogActions>
+       </Dialog>
+    </Box>
   );
-}
+};
+
+export default SubscribersTable;

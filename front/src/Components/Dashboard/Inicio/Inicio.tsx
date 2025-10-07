@@ -5,7 +5,7 @@ import { Card, Typography } from '@mui/material';
 import DateRangeIcon from '@mui/icons-material/DateRange';
 import QueryBuilderIcon from '@mui/icons-material/QueryBuilder';
 import AccountBoxIcon from '@mui/icons-material/AccountBox';
-import Eventos from '../Eventos/Eventos';
+import EventsTable from '../Eventos/Eventos';
 
 
 
@@ -60,7 +60,7 @@ export default function Inicio() {
 
       {/* DATA */}
 
-      <Eventos readOnly={true}></Eventos>
+      <EventsTable></EventsTable>
 
 
     </>

@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException, BadRequestException, ForbiddenException, ConflictException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, BadRequestException, ForbiddenException, ConflictException, Res } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 
@@ -8,6 +8,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { ConfirmPinDto } from './dto/confirm-pin.dto';
 import { UpdateUserDto } from './dto/update-user.dto'; 
 import { Payload } from './interfaces/payload.interface';
+import * as cookieParser from 'cookie-parser';
 
 @Injectable()
 export class AuthService {
@@ -78,10 +79,18 @@ export class AuthService {
     const payload: Payload = { id: user.id, correo: user.correo };
     const accessToken = this.jwtService.sign(payload);
 
+
+    
+
     return {
       message: 'Inicio de sesión exitoso',
       token: accessToken,
       user: { id: user.id, correo: user.correo, nombre: user.nombre },
     };
   }
+
+
+
+
+
 }
