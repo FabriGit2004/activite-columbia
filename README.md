@@ -1,2 +1,1 @@
-# ACTIVITE
 # activite-columbia
