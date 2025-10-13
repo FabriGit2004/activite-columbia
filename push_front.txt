@@ -1,4 +1,0 @@
-npm run build
-sudo cp -r build/* /var/www/activite-columbia/
-sudo nginx -t
-sudo systemctl reload nginx
