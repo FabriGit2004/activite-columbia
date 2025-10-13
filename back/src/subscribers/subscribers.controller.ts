@@ -19,6 +19,13 @@ export class SubscribersController {
     return this.subscribersService.findAll();
   }
 
+
+  @Get('count') // duh
+  findAllRegistersAndCount() {
+    return this.subscribersService.findAndCount();
+  }
+
+
   @Get(':id')  // manager id
   findAll(@Param('id') id: string) {
     return this.subscribersService.findAllByManager(+id);

@@ -25,11 +25,11 @@ export default function BackgroundOverlay({ onClose, openDashboard }: Props) {
 
 
   const loguearUsuario = async (datos: { correo: string; password: string }) => {
-    const API_URL = 'http://localhost:3001/auth/login';
+    const API_URL_LOGIN = `api/auth/login`;
     setShowAlert(false);
 
     try {
-      const response = await axios.post(API_URL, datos);
+      const response = await axios.post(API_URL_LOGIN, datos);
       if (response.status === 201) {
         openDashboard();
 
@@ -50,7 +50,7 @@ export default function BackgroundOverlay({ onClose, openDashboard }: Props) {
 
 
     const verificarUsuario = async (datos: { correo: string; password: string;  pin: string }) => {
-    const API_URL = 'http://localhost:3001/auth/confirm';
+    const API_URL_CONFIRM = `api/auth/confirm`;
     setShowAlert(false);
 
     const { password, ...datosConfirmacion } = datos;
@@ -58,7 +58,7 @@ export default function BackgroundOverlay({ onClose, openDashboard }: Props) {
 
 
     try {
-      const response = await axios.post(API_URL, datosConfirmacion);
+      const response = await axios.post(API_URL_CONFIRM, datosConfirmacion);
       if (response.status === 201) {
         loguearUsuario(datosLogin)
       }

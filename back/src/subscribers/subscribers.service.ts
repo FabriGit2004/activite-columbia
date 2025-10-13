@@ -28,6 +28,11 @@ export class SubscribersService {
     return this.subscribersRepository.find();
   }
 
+  async findAndCount(): Promise<any> {
+    const [data, total] = await this.subscribersRepository.findAndCount();
+    return { total };
+  }
+
 
   // We call all events that correspond to one manager
   

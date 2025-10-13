@@ -30,7 +30,6 @@ interface CreateEventDto {
   usuarioId: number;
 }
 
-const API_URL = 'http://127.0.0.1:3001/events'; // Cambiar según tu backend
 
 
  const obtenerCookie = (nombre: string) => {
@@ -59,6 +58,9 @@ const API_URL = 'http://127.0.0.1:3001/events'; // Cambiar según tu backend
 
 
 const EventsTable: React.FC = () => {
+
+  const API_URL_EVENTS = `api/events`; // Cambiar según tu backend
+
   const [rows, setRows] = useState<Event[]>([]);
   const [open, setOpen] = useState(false);
   const [idUsuario, setIdUsuario] = useState<number | null>(parseInt(obtenerCookie('userId')));
@@ -80,7 +82,7 @@ const EventsTable: React.FC = () => {
     setIdUsuario(parseInt(userId ?? ''))
 
     try {
-      const { data } = await axios.get<Event[]>(`${API_URL}/${userId}`);
+      const { data } = await axios.get<Event[]>(`${API_URL_EVENTS}/${userId}`);
       setRows(data);
     } catch (err) {
       console.error('Error al cargar los eventos', err);
@@ -95,7 +97,7 @@ const EventsTable: React.FC = () => {
   const handleDelete = async (id: number) => {
 
     try {
-      await axios.delete(`${API_URL}/${id}`);
+      await axios.delete(`${API_URL_EVENTS}/${id}`);
       setRows((prev) => prev.filter((r) => r.id !== id));
     } catch (err) {
       console.error('Error al eliminar el evento', err);
@@ -105,7 +107,7 @@ const EventsTable: React.FC = () => {
   // ➕ Crear evento
   const handleCreate = async () => {
     try {
-      const { data } = await axios.post<Event>(API_URL, newEvent);
+      const { data } = await axios.post<Event>(API_URL_EVENTS, newEvent);
       setRows((prev) => [...prev, data]);
       setOpen(false);
       setNewEvent({

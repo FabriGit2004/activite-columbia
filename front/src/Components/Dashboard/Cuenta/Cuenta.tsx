@@ -23,9 +23,11 @@ interface PerfilUsuario {
   // Puedes añadir más campos como 'fechaRegistro' si tu backend los devuelve
 }
 
-const API_URL = 'http://127.0.0.1:3001/auth/me';
 
 export default function MiCuenta() {
+
+  const API_URL_ACCOUNT = `api/auth/me`;
+
   const [perfil, setPerfil] = React.useState<PerfilUsuario>({
     nombre: '',
     correo: '',
@@ -76,7 +78,7 @@ export default function MiCuenta() {
         throw new Error('No se encontró el token de autenticación.');
       }
 
-      const response = await axios.get<PerfilUsuario>(API_URL, {
+      const response = await axios.get<PerfilUsuario>(API_URL_ACCOUNT, {
         headers: {
           Authorization: `Bearer ${token}`, // Envía el token al backend
         },

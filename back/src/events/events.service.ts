@@ -28,6 +28,11 @@ export class EventsService {
     return this.eventsRepository.find();
   }
 
+  async findAndCount(): Promise<any> {
+    const [data, total] = await this.eventsRepository.findAndCount();
+    return { total };
+  }
+
 
   // We call all events that correspond to one manager
 

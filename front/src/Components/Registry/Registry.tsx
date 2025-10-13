@@ -32,10 +32,10 @@ export default function BackgroundOverlay({ onClose, openDashboard }: props) {
 
   const registrarUsuario = async (datos: { nombre: string; correo: string; password: string; }) => {
 
-    const API_URL = 'http://localhost:3001/auth/register';
+    const API_URL_REGISTER = `api/auth/register`;
 
     try {
-      const response = await axios.post(API_URL, datos);
+      const response = await axios.post(API_URL_REGISTER, datos);
 
       if (response.status === 201) {
         setMessage("Usuario registrado favor iniciar sesión y certificar cuenta")

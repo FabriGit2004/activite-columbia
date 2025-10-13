@@ -31,7 +31,6 @@ interface CreateSubscriberDto {
   fechaRegistro: string;
 }
 
-const API_URL = 'http://127.0.0.1:3001/subscribers';
 
 
 const obtenerCookie = (nombre: string) => {
@@ -62,6 +61,10 @@ const obtenerCookie = (nombre: string) => {
 // --- Componente Principal ---
 
 const SubscribersTable: React.FC = () => {
+
+  const API_URL_SUBSCRIBERS= `api/subscribers`;
+
+
   const [rows, setRows] = useState<Subscriber[]>([]);
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
@@ -93,7 +96,7 @@ const SubscribersTable: React.FC = () => {
     const userId = obtenerCookie('userId');
 
     try {
-      const { data } = await axios.get<Subscriber[]>(`${API_URL}/${userId}`);
+      const { data } = await axios.get<Subscriber[]>(`${API_URL_SUBSCRIBERS}/${userId}`);
       // **IMPORTANTE**: Filtrar filas que no tienen 'id' si la API lo permite, 
       // para evitar errores críticos en DataGrid.
       const validRows = data.filter(row => row.id !== undefined && row.id !== null);
@@ -122,7 +125,7 @@ const SubscribersTable: React.FC = () => {
   const handleDelete = async (id: number) => {
     if (!window.confirm('¿Seguro que deseas eliminar este suscriptor?')) return;
     try {
-      await axios.delete(`${API_URL}/${id}`);
+      await axios.delete(`${API_URL_SUBSCRIBERS}/${id}`);
       setRows((prev) => prev.filter((r) => r.id !== id));
     } catch (err) {
       console.error('Error al eliminar suscriptor', err);
@@ -141,7 +144,7 @@ const SubscribersTable: React.FC = () => {
   const handleCreate = async () => {
     if (telefonoError || !newSubscriber.nombre || newSubscriber.usuarioId <= 0) return;
     try {
-      const { data } = await axios.post<Subscriber>(API_URL, newSubscriber);
+      const { data } = await axios.post<Subscriber>(API_URL_SUBSCRIBERS, newSubscriber);
       setRows((prev) => [...prev, data]);
       setOpen(false);
       // Resetear estados del formulario

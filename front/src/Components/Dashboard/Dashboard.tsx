@@ -113,7 +113,7 @@ export default function ClippedDrawer() {
             />
           </Box>
 
-          <Button ><Chip label='CREAR EVENTO + ' sx={Global.ButtonStyle}></Chip></Button>
+          {/* <Button ><Chip label='CREAR EVENTO + ' sx={Global.ButtonStyle}></Chip></Button> */}
           <Button onClick={closeSession} variant="outlined" startIcon={<LogoutRoundedIcon></LogoutRoundedIcon>}>CERRAR SESIÓN</Button>
 
         </Toolbar>

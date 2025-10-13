@@ -13,8 +13,7 @@ interface Suscriptor {
   managerId: number;
 }
 
-const API_URL = 'http://127.0.0.1:3001/subscribers';
-const WHATSAPP_SEND_URL = 'http://127.0.0.1:3001/whatsapp/send-hello';
+
 
 const obtenerCookie = (nombre: string): string | null => {
   const nameEQ = nombre + '=';
@@ -28,6 +27,10 @@ const obtenerCookie = (nombre: string): string | null => {
 };
 
 export default function WhatsappPanel() {
+
+  const API_URL_SUBSCRIBERS2 = `api/subscribers`;
+  const WHATSAPP_SEND_URL_NEW = `api/whatsapp/send-hello`;
+
   const [managerId, setManagerId] = useState<string | null>(null);
   const [suscriptores, setSuscriptores] = useState<Suscriptor[]>([]);
   const [cargando, setCargando] = useState(true);
@@ -36,7 +39,7 @@ export default function WhatsappPanel() {
 
   const fetchSubscribers = useCallback(async (userId: string) => {
     try {
-      const { data } = await axios.get<Suscriptor[]>(`${API_URL}/${userId}`);
+      const { data } = await axios.get<Suscriptor[]>(`${API_URL_SUBSCRIBERS2}/${userId}`);
       const validRows = data.filter(r => r.telefono);
       setSuscriptores(validRows);
       if (validRows.length === 0)
@@ -69,7 +72,7 @@ export default function WhatsappPanel() {
       // Enviar mensaje a cada suscriptor del manager
       for (const sub of suscriptores) {
         const payload = { toPhone: sub.telefono };
-        const res = await axios.post(WHATSAPP_SEND_URL, payload);
+        const res = await axios.post(WHATSAPP_SEND_URL_NEW, payload);
 
         if (res.status >= 200 && res.status < 300) sentCount++;
       }

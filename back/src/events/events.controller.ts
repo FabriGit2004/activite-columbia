@@ -20,6 +20,12 @@ export class EventsController {
     return this.eventsService.findAll();
   }
 
+  @Get('count') // duh
+  findAllRegistersAndCount() {
+    return this.eventsService.findAndCount();
+  }
+
+
   @Get(':id')  // manager id
   findAll(@Param('id') id: string) {
     return this.eventsService.findAllByManager(+id);
